@@ -102,6 +102,7 @@ func (s *session) serve() {
 	var from string
 	var to []string
 	var buffer bytes.Buffer
+        var saw_from bool = false 
 
 	// Get remote end info for the Received header.
 	s.remoteIP, _, _ = net.SplitHostPort(s.conn.RemoteAddr().String())
@@ -131,8 +132,9 @@ loop:
 			s.writef("250 %s greets %s", s.srv.Hostname, s.remoteName)
 
 			// RFC 2821 section 4.1.4 specifies that EHLO has the same effect as RSET.
-			from = nil
+			from = ""
 			to = nil
+			saw_from = false
 			buffer.Reset()
 		case "MAIL":
 			match := mailFromRE.FindStringSubmatch(args)
@@ -141,11 +143,12 @@ loop:
 			} else {
 				from = match[1]
 				s.writef("250 Ok")
+  				saw_from = true
 			}
 			to = nil
 			buffer.Reset()
 		case "RCPT":
-			if from == nil {
+			if saw_from == false {
 				s.writef("503 Bad sequence of commands (MAIL required before RCPT)")
 				break
 			}
@@ -163,7 +166,7 @@ loop:
 				}
 			}
 		case "DATA":
-			if from == nil || to == nil {
+			if saw_from == false || to == nil {
 				s.writef("503 Bad sequence of commands (MAIL & RCPT required before DATA)")
 				break
 			}
