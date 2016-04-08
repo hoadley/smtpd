@@ -131,7 +131,7 @@ loop:
 			s.writef("250 %s greets %s", s.srv.Hostname, s.remoteName)
 
 			// RFC 2821 section 4.1.4 specifies that EHLO has the same effect as RSET.
-			from = ""
+			from = nil
 			to = nil
 			buffer.Reset()
 		case "MAIL":
@@ -145,7 +145,7 @@ loop:
 			to = nil
 			buffer.Reset()
 		case "RCPT":
-			if from == "" {
+			if from == nil {
 				s.writef("503 Bad sequence of commands (MAIL required before RCPT)")
 				break
 			}
@@ -163,7 +163,7 @@ loop:
 				}
 			}
 		case "DATA":
-			if from == "" || to == nil {
+			if from == nil || to == nil {
 				s.writef("503 Bad sequence of commands (MAIL & RCPT required before DATA)")
 				break
 			}
